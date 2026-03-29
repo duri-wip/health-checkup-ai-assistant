@@ -13,7 +13,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     entrypoint: ["/bin/sh", "-c"]
-    command: ["ollama serve & until ollama list > /dev/null 2>&1; do sleep 1; done; ollama pull llama3.1:8b; wait"]
+    command: ["ollama serve & until ollama list > /dev/null 2>&1; do sleep 1; done; ollama pull llama3.1:8b; ollama pull qwen2.5:7b; wait"]
 
   agent:
     build:
