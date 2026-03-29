@@ -26,5 +26,16 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=llama3.1:8b
 
+  front:
+    build:
+        context: ./front
+        dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    depends_on:
+      - agent
+    environment:
+      - AGENT_URL=http://agent:8001
+
 volumes:
   ollama_data:
