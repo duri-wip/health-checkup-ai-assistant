@@ -2,6 +2,9 @@ import os
 import uuid
 import requests
 import streamlit as st
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 AGENT_URL = os.getenv("AGENT_URL", "http://localhost:8001")
 
@@ -16,7 +19,7 @@ if "messages" not in st.session_state:
 
 def fetch_models() -> list[str]:
     try:
-        response = requests.get(f"{AGENT_URL}/chat/models", timeout=10)
+        response = requests.get(f"{AGENT_URL}/chat/models", timeout=10, verify=False)
         response.raise_for_status()
         return response.json().get("models", [])
     except Exception:
@@ -71,6 +74,7 @@ if prompt := st.chat_input("예: 최근 건강검진 결과는 어때요?"):
                 },
                 stream=True,
                 timeout=600,
+                verify=False,
             ) as response:
                 response.raise_for_status()
                 for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
