@@ -15,20 +15,31 @@ def build_prompt(state: HealthState) -> HealthState:
     reference_list = data["referenceList"]
     question_type = state["question_type"]
 
-    # 질문 유형별 관련 수치만 필터링
     FIELD_MAP: dict[str, list[str]] = {
-        "cholesterol": ["totalCholesterol", "HDLCholesterol", "LDLCholesterol", "triglyceride"],
+        "cholesterol": ["totalCholesterol", "hdlCholesterol", "ldlCholesterol", "triglyceride"],
         "blood_pressure": ["bloodPressure"],
         "blood_glucose": ["fastingBloodGlucose"],
-        "liver": ["AST", "ALT", "yGPT"],
-        "kidney": ["serumCreatinine", "GFR"],
+        "liver": ["ast", "alt", "yGpt"],
+        "kidney": ["serumCreatinine", "gfr"],
         "general": list(overview.keys()),
     }
 
     target_fields = FIELD_MAP.get(question_type, list(overview.keys()))
     filtered_overview = {k: v for k, v in overview.items() if k in target_fields}
-    
+
+    ref_normal = next((r for r in reference_list if r.get("refType") == "정상(A)"), {})
+    ref_warning = next((r for r in reference_list if r.get("refType") == "정상(B)"), {})
+    ref_danger = next((r for r in reference_list if r.get("refType") == "질환의심"), {})
+    filtered_ref = {
+        "정상(A)": {k: v for k, v in ref_normal.items() if k in target_fields and v},
+        "정상(B)": {k: v for k, v in ref_warning.items() if k in target_fields and v},
+        "질환의심": {k: v for k, v in ref_danger.items() if k in target_fields and v},
+    }
+
     state["prompt"] = f"""{SYSTEM_PROMPT}
+
+[정상 기준]
+{filtered_ref}
 
 [검진 데이터]
 {filtered_overview}
