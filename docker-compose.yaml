@@ -1,0 +1,44 @@
+services:
+  api-server:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama serve & until ollama list > /dev/null 2>&1; do sleep 1; done; ollama pull llama3.1:8b; ollama pull qwen2.5:7b; wait"]
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    depends_on:
+      - api-server
+      - ollama
+    environment:
+      - MOCK_API_URL=http://api-server:8000
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+
+  front:
+    build:
+        context: ./front
+        dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    depends_on:
+      - agent
+    environment:
+      - AGENT_URL=http://agent:8001
+
+volumes:
+  ollama_data:
